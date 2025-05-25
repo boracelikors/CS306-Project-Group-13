@@ -9,31 +9,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $action = $_POST['action'];
     
     try {
-        if ($action == 'valid_assignment') {
-            // Test Case 1: Valid assignment (trigger should succeed)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (1, 1)");
+        if ($action == 'maintenance_mode') {
+            // Test Case 1: Change vehicle to maintenance (trigger should log status change)
+            $stmt = $conn->prepare("UPDATE Vehicles SET operational_status = 'Maintenance' WHERE vehicle_id = 1");
             $stmt->execute();
-            $message = "✅ Valid assignment completed! Trigger fired successfully and logged the assignment.";
+            $message = "✅ Vehicle status changed to Maintenance! Trigger logged the status change in Vehicle_Status_Log table.";
             $success = true;
             
-        } elseif ($action == 'invalid_drone') {
-            // Test Case 2: Invalid drone ID (trigger should fail)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (999, 1)");
+        } elseif ($action == 'activate_vehicle') {
+            // Test Case 2: Activate vehicle (trigger should log status change)
+            $stmt = $conn->prepare("UPDATE Vehicles SET operational_status = 'Active' WHERE vehicle_id = 3");
             $stmt->execute();
-            $message = "❌ This shouldn't happen - invalid drone should be rejected!";
-            $success = false;
+            $message = "✅ Vehicle status changed to Active! Trigger logged the status change in Vehicle_Status_Log table.";
+            $success = true;
             
-        } elseif ($action == 'invalid_missile') {
-            // Test Case 3: Invalid missile ID (trigger should fail)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (1, 999)");
+        } elseif ($action == 'repair_mode') {
+            // Test Case 3: Change vehicle to repair mode
+            $stmt = $conn->prepare("UPDATE Vehicles SET operational_status = 'Repair' WHERE vehicle_id = 2");
             $stmt->execute();
-            $message = "❌ This shouldn't happen - invalid missile should be rejected!";
-            $success = false;
+            $message = "✅ Vehicle status changed to Repair! Trigger logged the status change in Vehicle_Status_Log table.";
+            $success = true;
         }
         
     } catch (mysqli_sql_exception $e) {
         $message = "🔥 Trigger validation worked! Error: " . $e->getMessage();
-        $success = true; // This is actually success for validation triggers
+        $success = true;
     }
     
     $stmt->close();
@@ -46,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log Missile Assignment - Trigger Test</title>
+    <title>Vehicle Status Logging - Trigger Test</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -83,11 +83,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .test-button:hover {
             background: #2980b9;
         }
-        .test-button.danger {
-            background: #e74c3c;
+        .test-button.warning {
+            background: #f39c12;
         }
-        .test-button.danger:hover {
-            background: #c0392b;
+        .test-button.warning:hover {
+            background: #e67e22;
+        }
+        .test-button.success {
+            background: #27ae60;
+        }
+        .test-button.success:hover {
+            background: #229954;
         }
         .message {
             margin-top: 20px;
@@ -118,42 +124,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </style>
 </head>
 <body>
-    <h1>🚀 Log Missile Assignment Trigger</h1>
+    <h1>🚗 Vehicle Status Logging Trigger</h1>
     
     <div class="trigger-info">
         <h3>About this Trigger</h3>
-        <p><strong>LogMissileAssignment</strong> automatically fires when someone inserts into the Drone_Missile_Usage table. It:</p>
+        <p><strong>LogVehicleStatusChange</strong> automatically fires when someone updates vehicle status in the Vehicles table. It:</p>
         <ul>
-            <li>✅ Validates that the drone exists in the Drones table</li>
-            <li>✅ Validates that the missile exists in the Missiles table</li>
-            <li>✅ Logs the assignment in the DroneStatus table</li>
-            <li>❌ Prevents invalid assignments with error messages</li>
+            <li>✅ Validates that the vehicle exists</li>
+            <li>✅ Logs old and new status in the Vehicle_Status_Log table</li>
+            <li>✅ Records the timestamp of the status change</li>
+            <li>✅ Only logs when status actually changes</li>
         </ul>
         <p><strong>Test the trigger by clicking the buttons below:</strong></p>
     </div>
 
     <div class="test-buttons">
         <form method="POST" style="flex: 1;">
-            <input type="hidden" name="action" value="valid_assignment">
+            <input type="hidden" name="action" value="maintenance_mode">
+            <button type="submit" class="test-button warning">
+                🔧 Set Maintenance<br>
+                <small>(Vehicle 1)</small>
+            </button>
+        </form>
+        
+        <form method="POST" style="flex: 1;">
+            <input type="hidden" name="action" value="activate_vehicle">
+            <button type="submit" class="test-button success">
+                ✅ Activate Vehicle<br>
+                <small>(Vehicle 3)</small>
+            </button>
+        </form>
+        
+        <form method="POST" style="flex: 1;">
+            <input type="hidden" name="action" value="repair_mode">
             <button type="submit" class="test-button">
-                ✅ Test Valid Assignment<br>
-                <small>(Drone 1 + Missile 1)</small>
-            </button>
-        </form>
-        
-        <form method="POST" style="flex: 1;">
-            <input type="hidden" name="action" value="invalid_drone">
-            <button type="submit" class="test-button danger">
-                ❌ Test Invalid Drone<br>
-                <small>(Drone 999 - should fail)</small>
-            </button>
-        </form>
-        
-        <form method="POST" style="flex: 1;">
-            <input type="hidden" name="action" value="invalid_missile">
-            <button type="submit" class="test-button danger">
-                ❌ Test Invalid Missile<br>
-                <small>(Missile 999 - should fail)</small>
+                🔨 Set Repair Mode<br>
+                <small>(Vehicle 2)</small>
             </button>
         </form>
     </div>

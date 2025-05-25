@@ -81,8 +81,8 @@ $conn = getMySQLConnection();
             <div class="responsible">Responsible: Team Member 2</div>
         </div>
         <div class="item">
-            <a href="triggers/trigger3.php">Inventory Management Trigger</a>
-            <p>Updates inventory levels and generates alerts for low stock.</p>
+            <a href="triggers/trigger3.php">Agent Activity Logging</a>
+            <p>Logs agent activities and maintains activity history for performance tracking.</p>
             <div class="responsible">Responsible: Team Member 3</div>
         </div>
         <div class="item">

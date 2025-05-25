@@ -9,31 +9,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $action = $_POST['action'];
     
     try {
-        if ($action == 'valid_assignment') {
-            // Test Case 1: Valid assignment (trigger should succeed)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (1, 1)");
+        if ($action == 'update_title') {
+            // Test Case 1: Update report title (trigger should log the change)
+            $stmt = $conn->prepare("UPDATE Intelligence_Reports SET title = 'Updated: Mission Status Report' WHERE report_id = 1");
             $stmt->execute();
-            $message = "✅ Valid assignment completed! Trigger fired successfully and logged the assignment.";
+            $message = "✅ Report title updated! Trigger logged the title change in Report_Update_Log table.";
             $success = true;
             
-        } elseif ($action == 'invalid_drone') {
-            // Test Case 2: Invalid drone ID (trigger should fail)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (999, 1)");
+        } elseif ($action == 'classify_report') {
+            // Test Case 2: Update report title to classified
+            $stmt = $conn->prepare("UPDATE Intelligence_Reports SET title = 'CLASSIFIED: Operation Phoenix' WHERE report_id = 2");
             $stmt->execute();
-            $message = "❌ This shouldn't happen - invalid drone should be rejected!";
-            $success = false;
+            $message = "✅ Report classified! Trigger logged the title change in Report_Update_Log table.";
+            $success = true;
             
-        } elseif ($action == 'invalid_missile') {
-            // Test Case 3: Invalid missile ID (trigger should fail)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (1, 999)");
+        } elseif ($action == 'urgent_update') {
+            // Test Case 3: Mark report as urgent
+            $stmt = $conn->prepare("UPDATE Intelligence_Reports SET title = 'URGENT: Threat Assessment Update' WHERE report_id = 3");
             $stmt->execute();
-            $message = "❌ This shouldn't happen - invalid missile should be rejected!";
-            $success = false;
+            $message = "✅ Report marked urgent! Trigger logged the title change in Report_Update_Log table.";
+            $success = true;
         }
         
     } catch (mysqli_sql_exception $e) {
         $message = "🔥 Trigger validation worked! Error: " . $e->getMessage();
-        $success = true; // This is actually success for validation triggers
+        $success = true;
     }
     
     $stmt->close();
@@ -46,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log Missile Assignment - Trigger Test</title>
+    <title>Report Update Logging - Trigger Test</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -83,10 +83,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .test-button:hover {
             background: #2980b9;
         }
-        .test-button.danger {
+        .test-button.classified {
+            background: #8e44ad;
+        }
+        .test-button.classified:hover {
+            background: #7d3c98;
+        }
+        .test-button.urgent {
             background: #e74c3c;
         }
-        .test-button.danger:hover {
+        .test-button.urgent:hover {
             background: #c0392b;
         }
         .message {
@@ -118,42 +124,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </style>
 </head>
 <body>
-    <h1>🚀 Log Missile Assignment Trigger</h1>
+    <h1>📋 Report Update Logging Trigger</h1>
     
     <div class="trigger-info">
         <h3>About this Trigger</h3>
-        <p><strong>LogMissileAssignment</strong> automatically fires when someone inserts into the Drone_Missile_Usage table. It:</p>
+        <p><strong>LogReportUpdate</strong> automatically fires when someone updates report titles in the Intelligence_Reports table. It:</p>
         <ul>
-            <li>✅ Validates that the drone exists in the Drones table</li>
-            <li>✅ Validates that the missile exists in the Missiles table</li>
-            <li>✅ Logs the assignment in the DroneStatus table</li>
-            <li>❌ Prevents invalid assignments with error messages</li>
+            <li>✅ Validates that the report exists</li>
+            <li>✅ Logs old and new titles in the Report_Update_Log table</li>
+            <li>✅ Records the timestamp of the title change</li>
+            <li>✅ Only logs when title actually changes</li>
         </ul>
         <p><strong>Test the trigger by clicking the buttons below:</strong></p>
     </div>
 
     <div class="test-buttons">
         <form method="POST" style="flex: 1;">
-            <input type="hidden" name="action" value="valid_assignment">
+            <input type="hidden" name="action" value="update_title">
             <button type="submit" class="test-button">
-                ✅ Test Valid Assignment<br>
-                <small>(Drone 1 + Missile 1)</small>
+                📝 Update Report Title<br>
+                <small>(Report 1)</small>
             </button>
         </form>
         
         <form method="POST" style="flex: 1;">
-            <input type="hidden" name="action" value="invalid_drone">
-            <button type="submit" class="test-button danger">
-                ❌ Test Invalid Drone<br>
-                <small>(Drone 999 - should fail)</small>
+            <input type="hidden" name="action" value="classify_report">
+            <button type="submit" class="test-button classified">
+                🔒 Classify Report<br>
+                <small>(Report 2)</small>
             </button>
         </form>
         
         <form method="POST" style="flex: 1;">
-            <input type="hidden" name="action" value="invalid_missile">
-            <button type="submit" class="test-button danger">
-                ❌ Test Invalid Missile<br>
-                <small>(Missile 999 - should fail)</small>
+            <input type="hidden" name="action" value="urgent_update">
+            <button type="submit" class="test-button urgent">
+                🚨 Mark Urgent<br>
+                <small>(Report 3)</small>
             </button>
         </form>
     </div>

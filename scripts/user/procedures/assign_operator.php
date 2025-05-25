@@ -7,16 +7,16 @@ $success = false;
 // Get list of drones
 $drones = [];
 $conn = getMySQLConnection();
-$result = $conn->query("SELECT drone_id, model, status FROM Drones ORDER BY drone_id");
+$result = $conn->query("SELECT drone_id, model, `range`, max_altitude FROM Drones ORDER BY drone_id");
 if ($result) {
     while ($row = $result->fetch_assoc()) {
         $drones[] = $row;
     }
 }
 
-// Get list of operators
+// Get list of operators with their current ranks
 $operators = [];
-$result = $conn->query("SELECT op_id, name, rank FROM Operator ORDER BY name");
+$result = $conn->query("SELECT op_id, `rank` FROM Operator ORDER BY op_id");
 if ($result) {
     while ($row = $result->fetch_assoc()) {
         $operators[] = $row;
@@ -28,11 +28,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     $operator_id = $_POST['operator_id'];
     $drone_id = $_POST['drone_id'];
-    $rank = $_POST['rank'];
     
-    // Call the stored procedure
+    // Get the operator's current rank to pass to the procedure
+    $stmt = $conn->prepare("SELECT `rank` FROM Operator WHERE op_id = ?");
+    $stmt->bind_param("i", $operator_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $operator = $result->fetch_assoc();
+    $current_rank = $operator['rank'] ?? 'Sergeant'; // Default rank if not found
+    
+    // Call the stored procedure with current rank (no rank change)
     $stmt = $conn->prepare("CALL AssignOperatorToDrone(?, ?, ?)");
-    $stmt->bind_param("iis", $operator_id, $drone_id, $rank);
+    $stmt->bind_param("iis", $operator_id, $drone_id, $current_rank);
     
     try {
         $stmt->execute();
@@ -118,15 +125,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             text-decoration: underline;
         }
         .info {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 5px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
         }
     </style>
 </head>
 <body>
     <h1>Assign Operator to Drone</h1>
-    <p>Use this form to assign or update an operator's drone assignment.</p>
+    
+    <div class="info">
+        <h3>About this Stored Procedure</h3>
+        <p><strong>AssignOperatorToDrone</strong> assigns an existing operator to a specific drone. It:</p>
+        <ul>
+            <li>✅ Assigns the selected operator to the chosen drone</li>
+            <li>✅ Maintains the operator's current rank</li>
+            <li>✅ Validates that both operator and drone exist</li>
+            <li>❌ Prevents assignment to non-existent drones</li>
+        </ul>
+    </div>
 
     <form method="POST">
         <div class="form-group">
@@ -135,10 +154,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <option value="">Select an operator</option>
                 <?php foreach ($operators as $operator): ?>
                     <option value="<?php echo htmlspecialchars($operator['op_id']); ?>">
-                        <?php echo htmlspecialchars($operator['name'] ?? 'Operator ' . $operator['op_id']); ?>
-                        <?php if ($operator['rank']): ?>
-                            (<?php echo htmlspecialchars($operator['rank']); ?>)
-                        <?php endif; ?>
+                        Operator <?php echo htmlspecialchars($operator['op_id']); ?> - 
+                        <?php echo htmlspecialchars($operator['rank']); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -152,25 +169,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <option value="<?php echo htmlspecialchars($drone['drone_id']); ?>">
                         Drone <?php echo htmlspecialchars($drone['drone_id']); ?> - 
                         <?php echo htmlspecialchars($drone['model']); ?>
-                        (<?php echo htmlspecialchars($drone['status']); ?>)
+                        (Range: <?php echo htmlspecialchars($drone['range']); ?>km, 
+                         Max Alt: <?php echo htmlspecialchars($drone['max_altitude']); ?>m)
                     </option>
                 <?php endforeach; ?>
             </select>
         </div>
 
-        <div class="form-group">
-            <label for="rank">Operator Rank:</label>
-            <select id="rank" name="rank" required>
-                <option value="">Select a rank</option>
-                <option value="Junior">Junior</option>
-                <option value="Senior">Senior</option>
-                <option value="Expert">Expert</option>
-                <option value="Master">Master</option>
-            </select>
-            <div class="info">This will update the operator's rank if they already exist.</div>
-        </div>
-
-        <button type="submit">Assign Operator</button>
+        <button type="submit">Assign Operator to Drone</button>
     </form>
 
     <?php if ($message): ?>
@@ -179,6 +185,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     <?php endif; ?>
 
-    <a href="../index.php" class="back-link">Back to Home</a>
+    <a href="../index.php" class="back-link">← Back to Home</a>
 </body>
 </html> 
