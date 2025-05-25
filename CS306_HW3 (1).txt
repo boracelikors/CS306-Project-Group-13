@@ -29,8 +29,8 @@ Contents
 This project focuses on extending our previously developed database system into a fully func- tional web application, supporting both user and administrator interfaces. Using PHP and XAMPP as our development stack, the goal is to integrate core database logic-specifically, triggers and stored procedures-with a dynamic and interactive website. In addition, we introduce a support ticket system that allows users to request assistance and administrators to manage and respond to those requests.
 The application is divided into two primary components:
 
-• User Side: A homepage where users can access features that interact with database triggers and stored procedures. It also includes a support section where users can open tickets for help.
-• Admin Side: A dedicated interface for administrators to view and manage active support tickets submitted by users. Admins can comment on tickets and mark them as resolved.
+ï¿½ User Side: A homepage where users can access features that interact with database triggers and stored procedures. It also includes a support section where users can open tickets for help.
+ï¿½ Admin Side: A dedicated interface for administrators to view and manage active support tickets submitted by users. Admins can comment on tickets and mark them as resolved.
 
 The web application is hosted locally using XAMPP, and PHP is used to handle both MySQL and MongoDB database interactions. The triggers and stored procedures used in this project were designed and implemented in earlier phases, and this phase focuses on making them accessible and testable via the web interface. Meanwhile, the support ticket system is backed by MongoDB.
 
@@ -62,12 +62,12 @@ Similarly, each member integrates a stored procedure from the previous phase. Th
 
 
                     Figure 2: An example Stored Procedure Page The stored procedure page includes:
-• A description of the procedure's functionality.
-• Input boxes for all required parameters.
-• A submit button that triggers the procedure using PHP and MySQL. After the
+ï¿½ A description of the procedure's functionality.
+ï¿½ Input boxes for all required parameters.
+ï¿½ A submit button that triggers the procedure using PHP and MySQL. After the
 
 procedure is called using the interactive button, the output of the procedure should be displayed within the page.
-• A hyperlink back to the homepage.
+ï¿½ A hyperlink back to the homepage.
 
 Navigation
 
@@ -115,15 +115,15 @@ Ticket Creation Page
 
 The ticket creation page includes:
 
-• Two navigation links at the top: one to return to the homepage and another to return to the ticket list page.
-• Input fields for the username and the body of the ticket message.
-• A submit button to create the ticket.
+ï¿½ Two navigation links at the top: one to return to the homepage and another to return to the ticket list page.
+ï¿½ Input fields for the username and the body of the ticket message.
+ï¿½ A submit button to create the ticket.
 
 Each ticket also stores additional information automatically:
 
-• The creation date and time (as a string).
-• A boolean status indicating whether the ticket is active.
-• An array of comments (initially empty).
+ï¿½ The creation date and time (as a string).
+ï¿½ A boolean status indicating whether the ticket is active.
+ï¿½ An array of comments (initially empty).
 
 Figure 7 shows an example page layout for ticket creation.
 
@@ -144,11 +144,11 @@ Ticket Detail View
 
 From the ticket list, users can click on a specific ticket to view its details. The detail page shows:
 
-• Username of the ticket creator
-• Creation date
-• Ticket body
-• Status (active/inactive)
-• Comments
+ï¿½ Username of the ticket creator
+ï¿½ Creation date
+ï¿½ Ticket body
+ï¿½ Status (active/inactive)
+ï¿½ Comments
 
 Users can also add new comments to the ticket. A link is provided at the bottom to return to the ticket list page. Figure 8 shows an example layout for the ticket creation page.
 
@@ -168,8 +168,8 @@ Unlike regular users, admins can see all active tickets from all users. The layo
 Admin Ticket Detail View
 
 Admins can view the details of any active ticket. In addition to the user's comments and metadata, admins can:
-• Submit comments as the user admin (automatically assigned).
-• Mark the ticket as resolved, which sets its status to false.
+ï¿½ Submit comments as the user admin (automatically assigned).
+ï¿½ Mark the ticket as resolved, which sets its status to false.
 Once a ticket is resolved, it will no longer appear in either the user or admin homepage views, as both interfaces filter out inactive tickets. Figure 9 shows the admin's view of a ticket's details
 
 
@@ -184,9 +184,9 @@ This section covers the technical requirements for setting up and running the pr
 
 The project is hosted locally using the XAMPP server. The directory structure is organized under the htdocs folder in XAMPP as follows:
 
-• htdocs/user: Contains all PHP files for the user interface, including trigger and stored procedure pages and the support ticket system.
+ï¿½ htdocs/user: Contains all PHP files for the user interface, including trigger and stored procedure pages and the support ticket system.
 
-• htdocs/admin: Contains the admin's interface for viewing and managing support tick- ets.
+ï¿½ htdocs/admin: Contains the admin's interface for viewing and managing support tick- ets.
 
 Users can access the homepage via localhost/user, and admins can access their dashboard via localhost/admin.
 
@@ -199,18 +199,18 @@ Each group member is responsible for integrating one trigger and one stored proc
 MySQL is used to manage the core relational data of the system, including the logic behind triggers and stored procedures. All database operations (e.g., calling stored procedures, activating triggers via events) are implemented using PHP's MySQLi library.
 Example tasks performed using MySQL:
 
-• Triggering actions based on database inserts/updates
-• Executing stored procedures with user inputs
+ï¿½ Triggering actions based on database inserts/updates
+ï¿½ Executing stored procedures with user inputs
 
 3.4. MongoDB Integration for Support Tickets
 
 Support ticket operations are handled using MongoDB, with a single collection storing all ticket-related data. Each document in the collection contains:
 
-• username: Creator of the ticket
-• message: Body of the ticket
-• created at: Timestamp (stored as a string)
-• status: Boolean value (true = active, false = resolved)
-• comments: Array of comment strings
+ï¿½ username: Creator of the ticket
+ï¿½ message: Body of the ticket
+ï¿½ created at: Timestamp (stored as a string)
+ï¿½ status: Boolean value (true = active, false = resolved)
+ï¿½ comments: Array of comment strings
 
 Figure 10 shows the final structure of the MongoDB collections.
 
@@ -272,7 +272,7 @@ The final submission of the project must be packaged as a single zip archive. Th
 
 4.1. Contents of the Submission
 
-• Package all files into a ZIP archive with the following structure:
+ï¿½ Package all files into a ZIP archive with the following structure:
 |--  CS306_GROUP_X_HW3_REPORT.pdf
 |--  CS306_GROUP_X_HW3_SQLDUMP.sql
 |-- scripts
@@ -289,7 +289,7 @@ The final submission of the project must be packaged as a single zip archive. Th
 |	|	|-- .
 |	|	|--  script_m.php
 
-• PDF Report: A comprehensive document detailing the structure and functionality of the system.
+ï¿½ PDF Report: A comprehensive document detailing the structure and functionality of the system.
 
 - For each trigger;
 * provide the SQL script that will create it,
@@ -299,32 +299,32 @@ The final submission of the project must be packaged as a single zip archive. Th
 * state the input parameters and corresponding input boxes in the web page of it.
 - For each MongoDB query implemented for the support system;
 * provide the PHP script that corresponds to the query.
-• SQL File: A single SQL script file containing the statements for:
+ï¿½ SQL File: A single SQL script file containing the statements for:
 - Creation of the database and relevant tables.
 - Insertion of mock data to test the project.
 - Definitions of all triggers and stored procedures used in the project.
-• Scripts: All the PHP scripts of the web application. script i.php is a placeholder, you can name your scripts freely.
+ï¿½ Scripts: All the PHP scripts of the web application. script i.php is a placeholder, you can name your scripts freely.
 
 4.2. Demo and Grading Policy
 
 Project evaluation will be based on both the functionality demonstrated during an online demo and the quality of the submission package.
 
-• Demo (80%): Each group member is responsible for presenting their assigned trig- ger and stored procedure using their own development environment. One randomly selected member will also present the support ticket system. This ensures all team members are fully equipped to run and present the entire project.
-• Submission (20%): The submitted documentation and SQL file will be reviewed for completeness, clarity, and accuracy.
+ï¿½ Demo (80%): Each group member is responsible for presenting their assigned trig- ger and stored procedure using their own development environment. One randomly selected member will also present the support ticket system. This ensures all team members are fully equipped to run and present the entire project.
+ï¿½ Submission (20%): The submitted documentation and SQL file will be reviewed for completeness, clarity, and accuracy.
 
 4.3. Demo Requirements
 
 During the demo, each student must ensure that the following are available and correctly configured on their machine:
 
-• XAMPP server (with Apache and MySQL services running)
-• MongoDB Compass (or equivalent interface to view the ticket database)
-• Configured MongoDB PHP extension and project folders ready to execute
+ï¿½ XAMPP server (with Apache and MySQL services running)
+ï¿½ MongoDB Compass (or equivalent interface to view the ticket database)
+ï¿½ Configured MongoDB PHP extension and project folders ready to execute
 
 The demo will cover the working integration of:
 
-• Web interfaces for each trigger and stored procedure
-• Functional ticket creation, listing, and management
-• MongoDB and MySQL connectivity through PHP
+ï¿½ Web interfaces for each trigger and stored procedure
+ï¿½ Functional ticket creation, listing, and management
+ï¿½ MongoDB and MySQL connectivity through PHP
 
 The support system is developed collectively but must be presented confidently by any group member when selected.
 

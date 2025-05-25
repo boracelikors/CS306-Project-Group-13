@@ -9,31 +9,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $action = $_POST['action'];
     
     try {
-        if ($action == 'valid_assignment') {
-            // Test Case 1: Valid assignment (trigger should succeed)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (1, 1)");
+        if ($action == 'drone_attack') {
+            // Test Case 1: Valid drone attack (trigger should log the attack)
+            $stmt = $conn->prepare("INSERT INTO Drone_Target_Attacks (drone_id, target_id) VALUES (1, 1)");
             $stmt->execute();
-            $message = "✅ Valid assignment completed! Trigger fired successfully and logged the assignment.";
+            $message = "✅ Drone attack logged! Trigger recorded the attack in Drone_Attack_Log table.";
+            $success = true;
+            
+        } elseif ($action == 'stealth_mission') {
+            // Test Case 2: Stealth mission attack
+            $stmt = $conn->prepare("INSERT INTO Drone_Target_Attacks (drone_id, target_id) VALUES (2, 3)");
+            $stmt->execute();
+            $message = "✅ Stealth mission completed! Trigger recorded the attack in Drone_Attack_Log table.";
             $success = true;
             
         } elseif ($action == 'invalid_drone') {
-            // Test Case 2: Invalid drone ID (trigger should fail)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (999, 1)");
+            // Test Case 3: Invalid drone attack (trigger should fail)
+            $stmt = $conn->prepare("INSERT INTO Drone_Target_Attacks (drone_id, target_id) VALUES (999, 1)");
             $stmt->execute();
             $message = "❌ This shouldn't happen - invalid drone should be rejected!";
             $success = false;
             
-        } elseif ($action == 'invalid_missile') {
-            // Test Case 3: Invalid missile ID (trigger should fail)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (1, 999)");
+        } elseif ($action == 'invalid_target') {
+            // Test Case 4: Invalid target attack (trigger should fail)
+            $stmt = $conn->prepare("INSERT INTO Drone_Target_Attacks (drone_id, target_id) VALUES (1, 999)");
             $stmt->execute();
-            $message = "❌ This shouldn't happen - invalid missile should be rejected!";
+            $message = "❌ This shouldn't happen - invalid target should be rejected!";
             $success = false;
         }
         
     } catch (mysqli_sql_exception $e) {
         $message = "🔥 Trigger validation worked! Error: " . $e->getMessage();
-        $success = true; // This is actually success for validation triggers
+        $success = true;
     }
     
     $stmt->close();
@@ -46,7 +53,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log Missile Assignment - Trigger Test</title>
+    <title>Drone Attack Logging - Trigger Test</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -64,10 +71,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border: 1px solid #ddd;
         }
         .test-buttons {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 15px;
             margin: 20px 0;
-            flex-wrap: wrap;
         }
         .test-button {
             background: #3498db;
@@ -77,11 +84,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            flex: 1;
-            min-width: 200px;
         }
         .test-button:hover {
             background: #2980b9;
+        }
+        .test-button.stealth {
+            background: #34495e;
+        }
+        .test-button.stealth:hover {
+            background: #2c3e50;
         }
         .test-button.danger {
             background: #e74c3c;
@@ -118,42 +129,50 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </style>
 </head>
 <body>
-    <h1>🚀 Log Missile Assignment Trigger</h1>
+    <h1>🎯 Drone Attack Logging Trigger</h1>
     
     <div class="trigger-info">
         <h3>About this Trigger</h3>
-        <p><strong>LogMissileAssignment</strong> automatically fires when someone inserts into the Drone_Missile_Usage table. It:</p>
+        <p><strong>LogDroneTargetAttack</strong> automatically fires when someone inserts into the Drone_Target_Attacks table. It:</p>
         <ul>
             <li>✅ Validates that the drone exists in the Drones table</li>
-            <li>✅ Validates that the missile exists in the Missiles table</li>
-            <li>✅ Logs the assignment in the DroneStatus table</li>
-            <li>❌ Prevents invalid assignments with error messages</li>
+            <li>✅ Validates that the target exists in the Targets table</li>
+            <li>✅ Logs the attack in the Drone_Attack_Log table</li>
+            <li>❌ Prevents attacks with invalid drone or target IDs</li>
         </ul>
         <p><strong>Test the trigger by clicking the buttons below:</strong></p>
     </div>
 
     <div class="test-buttons">
-        <form method="POST" style="flex: 1;">
-            <input type="hidden" name="action" value="valid_assignment">
+        <form method="POST">
+            <input type="hidden" name="action" value="drone_attack">
             <button type="submit" class="test-button">
-                ✅ Test Valid Assignment<br>
-                <small>(Drone 1 + Missile 1)</small>
+                🚀 Standard Attack<br>
+                <small>(Drone 1 → Target 1)</small>
             </button>
         </form>
         
-        <form method="POST" style="flex: 1;">
+        <form method="POST">
+            <input type="hidden" name="action" value="stealth_mission">
+            <button type="submit" class="test-button stealth">
+                🥷 Stealth Mission<br>
+                <small>(Drone 2 → Target 3)</small>
+            </button>
+        </form>
+        
+        <form method="POST">
             <input type="hidden" name="action" value="invalid_drone">
             <button type="submit" class="test-button danger">
-                ❌ Test Invalid Drone<br>
+                ❌ Invalid Drone<br>
                 <small>(Drone 999 - should fail)</small>
             </button>
         </form>
         
-        <form method="POST" style="flex: 1;">
-            <input type="hidden" name="action" value="invalid_missile">
+        <form method="POST">
+            <input type="hidden" name="action" value="invalid_target">
             <button type="submit" class="test-button danger">
-                ❌ Test Invalid Missile<br>
-                <small>(Missile 999 - should fail)</small>
+                ❌ Invalid Target<br>
+                <small>(Target 999 - should fail)</small>
             </button>
         </form>
     </div>
