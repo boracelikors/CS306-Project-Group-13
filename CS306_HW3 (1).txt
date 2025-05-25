@@ -1,0 +1,335 @@
+CS306 Project Phase III
+Web Integrations of SQL and NoSQL Databases
+
+
+
+May 4, 2025
+
+
+Contents
+1 Introduction	2
+2 System Design and Features	2
+2.1 User Interface . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .	2
+2.2 Support Ticket System (User Side)  . . . . . . . . . . . . . . . . . . . . . . .	4
+2.3 Admin Interface . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .	7
+3 Implementation Requirements	8
+3.1 Project Structure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .	8
+3.2 Trigger and Stored Procedure Responsibilities  . . . . . . . . . . . . . . . . .	9
+3.3 MySQL Integration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .	9
+3.4 MongoDB Integration for Support Tickets  . . . . . . . . . . . . . . . . . . .	9
+3.5 Focus on Functionality	11
+3.6 Resources and References	11
+4 Submission and Evaluation	12
+4.1 Contents of the Submission	12
+4.2 Demo and Grading Policy	13
+4.3 Demo Requirements	13
+
+1. Introduction
+
+This project focuses on extending our previously developed database system into a fully func- tional web application, supporting both user and administrator interfaces. Using PHP and XAMPP as our development stack, the goal is to integrate core database logic-specifically, triggers and stored procedures-with a dynamic and interactive website. In addition, we introduce a support ticket system that allows users to request assistance and administrators to manage and respond to those requests.
+The application is divided into two primary components:
+
+• User Side: A homepage where users can access features that interact with database triggers and stored procedures. It also includes a support section where users can open tickets for help.
+• Admin Side: A dedicated interface for administrators to view and manage active support tickets submitted by users. Admins can comment on tickets and mark them as resolved.
+
+The web application is hosted locally using XAMPP, and PHP is used to handle both MySQL and MongoDB database interactions. The triggers and stored procedures used in this project were designed and implemented in earlier phases, and this phase focuses on making them accessible and testable via the web interface. Meanwhile, the support ticket system is backed by MongoDB.
+
+2. System Design and Features
+
+This section describes the key components of the web application, detailing how users and administrators interact with the system. Each part of the interface is designed to connect with the backend logic and database operations.
+
+2.1. User Interface
+
+The user side of the system is accessible via the localhost/user URL. This entry point leads to a homepage where users can navigate to triggers, stored procedures, or the support section. Each of these features is accessible through clearly labeled hyperlinks.
+
+Trigger Integration
+
+Each group member is responsible for integrating one database trigger with the web interface. The homepage displays a list of all triggers, with a brief description and the name of the person responsible for that integration.  Clicking on a trigger link opens a dedicated page
+
+
+
+
+
+Figure 1: An example Trigger Page
+
+describing how it works and showing interactive buttons that simulate different conditions under which the trigger would execute. After a button is clicked, the output message should be displayed within the page. Figure 1 shows an example page dedicated to a trigger.
+As an example, a trigger that behaves differently depending on two input conditions will have two buttons on its page. Each button initiates a case that tests a specific behavior of the trigger through database operations. At the bottom of the page, there is a link to return to the homepage.
+
+Stored Procedure Integration
+
+Similarly, each member integrates a stored procedure from the previous phase. The home- page displays these procedures along with descriptions and responsible group members. Clicking on a procedure link takes the user to a form where they can provide input val- ues for the procedure's parameters. Figure 2 shows an example page dedicated to a stored procedure.
+
+
+
+                    Figure 2: An example Stored Procedure Page The stored procedure page includes:
+• A description of the procedure's functionality.
+• Input boxes for all required parameters.
+• A submit button that triggers the procedure using PHP and MySQL. After the
+
+procedure is called using the interactive button, the output of the procedure should be displayed within the page.
+• A hyperlink back to the homepage.
+
+Navigation
+
+At the bottom of the user homepage, there is a hyperlink to the support section, where users can create and manage support tickets. This ensures smooth navigation throughout the system.
+Figure 3 shows an example layout for the home page of the user.
+
+
+
+Figure 3: The layout of the users' home page
+
+
+2.2. Support Ticket System (User Side)
+
+The support ticket system allows users to request help and track the status of their issues. All ticket data is stored in a MongoDB collection, and the interface is designed to be simple but functional.
+
+Ticket List Page
+
+The first page of the support section presents a dropdown menu to select a username. This acts as a lightweight login system. Only users who have at least one active ticket appear in this list. Figure 4 shows how the Ticket List page should look like if there is no active ticket in the system. After selecting a username, the system displays their active tickets along with a link to create a new ticket. Figure 6 shows the usernames that have active tickets, whereas Figure 5 shows the tickets of the username celebrimbor fan when it is selected from the dropdown menu.
+
+
+
+
+
+
+Figure 4: An example Ticket List page when there is no active tickets
+
+
+
+
+
+
+
+
+Figure 5: An example Ticket List page with the username filter
+
+
+
+
+
+
+
+Figure 6: Dropdown menu when there are active tickets
+
+Ticket Creation Page
+
+The ticket creation page includes:
+
+• Two navigation links at the top: one to return to the homepage and another to return to the ticket list page.
+• Input fields for the username and the body of the ticket message.
+• A submit button to create the ticket.
+
+Each ticket also stores additional information automatically:
+
+• The creation date and time (as a string).
+• A boolean status indicating whether the ticket is active.
+• An array of comments (initially empty).
+
+Figure 7 shows an example page layout for ticket creation.
+
+
+
+
+
+
+
+Figure 7: An example Ticket Creation Page
+
+
+Ticket Confirmation
+
+After submission, the system displays a confirmation page indicating whether the ticket was successfully created. This page also includes links to both create another ticket or return to the list of tickets.
+
+Ticket Detail View
+
+From the ticket list, users can click on a specific ticket to view its details. The detail page shows:
+
+• Username of the ticket creator
+• Creation date
+• Ticket body
+• Status (active/inactive)
+• Comments
+
+Users can also add new comments to the ticket. A link is provided at the bottom to return to the ticket list page. Figure 8 shows an example layout for the ticket creation page.
+
+
+
+Figure 8: An example ticket details page
+
+
+2.3. Admin Interface
+
+The admin interface is accessed via the localhost/admin URL and is functionally similar to the user's support system but with broader permissions.
+
+Admin Ticket List
+
+Unlike regular users, admins can see all active tickets from all users. The layout and features are similar, but the query in the backend retrieves a broader set of results. This page serves as the admin homepage.
+
+Admin Ticket Detail View
+
+Admins can view the details of any active ticket. In addition to the user's comments and metadata, admins can:
+• Submit comments as the user admin (automatically assigned).
+• Mark the ticket as resolved, which sets its status to false.
+Once a ticket is resolved, it will no longer appear in either the user or admin homepage views, as both interfaces filter out inactive tickets. Figure 9 shows the admin's view of a ticket's details
+
+
+Figure 9: Admin's view of the ticket details
+
+
+3. Implementation Requirements
+
+This section covers the technical requirements for setting up and running the project. It includes configuration steps, technology stack, folder structure, and guidelines for integrating both MySQL and MongoDB with PHP through XAMPP.
+
+3.1. Project Structure
+
+The project is hosted locally using the XAMPP server. The directory structure is organized under the htdocs folder in XAMPP as follows:
+
+• htdocs/user: Contains all PHP files for the user interface, including trigger and stored procedure pages and the support ticket system.
+
+• htdocs/admin: Contains the admin's interface for viewing and managing support tick- ets.
+
+Users can access the homepage via localhost/user, and admins can access their dashboard via localhost/admin.
+
+3.2. Trigger and Stored Procedure Responsibilities
+
+Each group member is responsible for integrating one trigger and one stored procedure. The triggers and procedures must be the ones developed in earlier phases of the database project. Integration responsibilities are displayed on the user homepage next to each feature's description.
+
+3.3. MySQL Integration
+
+MySQL is used to manage the core relational data of the system, including the logic behind triggers and stored procedures. All database operations (e.g., calling stored procedures, activating triggers via events) are implemented using PHP's MySQLi library.
+Example tasks performed using MySQL:
+
+• Triggering actions based on database inserts/updates
+• Executing stored procedures with user inputs
+
+3.4. MongoDB Integration for Support Tickets
+
+Support ticket operations are handled using MongoDB, with a single collection storing all ticket-related data. Each document in the collection contains:
+
+• username: Creator of the ticket
+• message: Body of the ticket
+• created at: Timestamp (stored as a string)
+• status: Boolean value (true = active, false = resolved)
+• comments: Array of comment strings
+
+Figure 10 shows the final structure of the MongoDB collections.
+
+
+
+
+Figure 10: MongoDB Compass screenshot showing the documents in the collection
+
+Installing the MongoDB Driver in XAMPP (Windows)
+
+This section describes how to add MongoDB extension into PHP for Windows machines, In the next sections there will be links that may help Mac/Linux users. To enable MongoDB functionality in XAMPP on Windows:
+
+1. Launch the terminal from the XAMPP control panel.
+
+
+2. Type composer -V to check the PHP and Composer versions. The output should be similar to the following:
+
+
+3. Visit the official PHP MongoDB driver download page to find a version matching your setup. You can find the compatible version from the following table:
+
+
+
+
+4. Download the appropriate zip file and extract the php mongodb.dll file.
+5. Copy php mongodb.dll into the xampp/php/ext directory.
+6. Edit php.ini (located in xampp/php) and add the following line just above extension=curl:
+
+
+7. In your project directory (inside htdocs/user and/or htdocs/admin), run:
+
+
+
+3.5. Focus on Functionality
+
+While visual design is not graded, functional correctness is essential. Pages should include appropriate links for navigation, interactive elements for database integration, and mean- ingful status or error messages. The goal is to build a working prototype, not a polished interface.
+
+3.6. Resources and References
+
+The following tutorials and documentation may assist during implementation:
+
+1. PHP + XAMPP setup: https://www.youtube.com/watch?v=jLqBiSDNXO0
+2. PHP basics: https://www.youtube.com/watch?v=SI69DXbYHXU
+3. GET and  POST usage: https://www.youtube.com/watch?v=6AzAYU8AOhQ
+4. PHP functions: https://www.youtube.com/watch?v=SBFO5bIDYHQ
+5. MySQL + PHP: https://www.youtube.com/watch?v=-1DTYAQ25bY
+6. Creating tables with phpMyAdmin: https://www.youtube.com/watch?v=BO6XOcfTyhU
+7. MySQL insertion: https://www.youtube.com/watch?v=tq0ghtZsHJ0
+
+8. Executing MySQL queries in PHP: https://www.youtube.com/watch?v=om_GHl6BrdM
+9. MongoDB PHP Library: https://www.mongodb.com/docs/php-library/current/ get-started/ (You are expexted to use MongoDB\Driver\Manager class, do not use the code sample provided in the link)
+10. MongoDB\Driver\Manager reference: https://www.php.net/mongodb-driver-manager
+11. MongoDB Compass: https://www.mongodb.com/products/tools/compass
+12. PHP add extension on Ubuntu: https://stackoverflow.com/questions/78765759/ add-extension-in-ubuntu-2204-to-xampp
+13. PHP add extension on Mac: https://stackoverflow.com/questions/27886117/ php-intl-installation-on-xampp
+
+4. Submission and Evaluation
+
+The final submission of the project must be packaged as a single zip archive. This archive will include both the project documentation and the accompanying SQL file required to recreate the database.
+
+4.1. Contents of the Submission
+
+• Package all files into a ZIP archive with the following structure:
+|--  CS306_GROUP_X_HW3_REPORT.pdf
+|--  CS306_GROUP_X_HW3_SQLDUMP.sql
+|-- scripts
+|	|-- user
+|	|	|--  index.php
+|	|	|--  script_1.php
+|	|	|-- .
+|	|	|-- .
+|	|	|--  script_n.php
+|	|--  admin
+|	|	|--  index.php
+|	|	|--  script_1.php
+|	|	|-- .
+|	|	|-- .
+|	|	|--  script_m.php
+
+• PDF Report: A comprehensive document detailing the structure and functionality of the system.
+
+- For each trigger;
+* provide the SQL script that will create it,
+* state the different cases and corresponding buttons in the web page of it.
+- For each stored procedure;
+* provide the SQL script that will create it,
+* state the input parameters and corresponding input boxes in the web page of it.
+- For each MongoDB query implemented for the support system;
+* provide the PHP script that corresponds to the query.
+• SQL File: A single SQL script file containing the statements for:
+- Creation of the database and relevant tables.
+- Insertion of mock data to test the project.
+- Definitions of all triggers and stored procedures used in the project.
+• Scripts: All the PHP scripts of the web application. script i.php is a placeholder, you can name your scripts freely.
+
+4.2. Demo and Grading Policy
+
+Project evaluation will be based on both the functionality demonstrated during an online demo and the quality of the submission package.
+
+• Demo (80%): Each group member is responsible for presenting their assigned trig- ger and stored procedure using their own development environment. One randomly selected member will also present the support ticket system. This ensures all team members are fully equipped to run and present the entire project.
+• Submission (20%): The submitted documentation and SQL file will be reviewed for completeness, clarity, and accuracy.
+
+4.3. Demo Requirements
+
+During the demo, each student must ensure that the following are available and correctly configured on their machine:
+
+• XAMPP server (with Apache and MySQL services running)
+• MongoDB Compass (or equivalent interface to view the ticket database)
+• Configured MongoDB PHP extension and project folders ready to execute
+
+The demo will cover the working integration of:
+
+• Web interfaces for each trigger and stored procedure
+• Functional ticket creation, listing, and management
+• MongoDB and MySQL connectivity through PHP
+
+The support system is developed collectively but must be presented confidently by any group member when selected.
+
+
+
+
+
+
