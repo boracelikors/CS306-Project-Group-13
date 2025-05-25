@@ -2,7 +2,7 @@
 // Database connection parameters
 $host = "localhost";
 $username = "root";
-$password = "2112";
+$password = "2003";
 $database = "military_intelligence";
 
 // Create connection

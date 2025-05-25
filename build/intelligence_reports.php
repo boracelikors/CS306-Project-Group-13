@@ -16,15 +16,15 @@ try {
     }
     
     // Get all intelligence reports with related information
-    $query = "SELECT ir.report_id, DATE_ADD(ir.date_created, INTERVAL 3 HOUR) as report_date, ir.content, ir.classification_level, 
-              a.name as agent_name, t.name as target_name, t.type as target_type
-              FROM IntelligenceReports ir
-              LEFT JOIN Agents a ON ir.agent_id = a.agent_id
-              LEFT JOIN Decides d ON ir.report_id = d.report_id
-              LEFT JOIN Targets t ON d.target_id = t.target_id
-              ORDER BY ir.date_created DESC";
+    $sql = "SELECT ir.*, a.name as agent_name, t.name as target_name
+            FROM Intelligence_Reports ir
+            LEFT JOIN Agent_Wrote_Report awr ON ir.report_id = awr.report_id
+            LEFT JOIN Agents a ON awr.agent_id = a.agent_id
+            LEFT JOIN Intelligence_Report_Decides_Target irdt ON ir.report_id = irdt.report_id
+            LEFT JOIN Targets t ON irdt.target_id = t.target_id
+            ORDER BY ir.date_created DESC";
               
-    $reports = $conn->query($query);
+    $reports = $conn->query($sql);
     
 } catch (Exception $e) {
     $error = $e->getMessage();
@@ -93,6 +93,13 @@ try {
 
         .report-date {
             color: #666;
+        }
+
+        .report-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
         }
 
         .report-content {
@@ -190,30 +197,36 @@ try {
             <?php while ($report = $reports->fetch_assoc()): ?>
                 <div class="report-card">
                     <div class="report-header">
-                        <div class="report-id">Report #<?php echo htmlspecialchars($report['report_id']); ?></div>
-                        <div class="report-date"><?php echo htmlspecialchars($report['report_date']); ?></div>
+                        <div class="report-id">Report #<?php echo htmlspecialchars($report['report_id'] ?? 'N/A'); ?></div>
+                        <div class="report-date"><?php echo htmlspecialchars($report['date_created'] ?? 'N/A'); ?></div>
                     </div>
+                    
+                    <div class="report-title">
+                        <?php echo htmlspecialchars($report['title'] ?? 'Untitled Report'); ?>
+                    </div>
+                    
                     <div class="report-content">
-                        <?php echo nl2br(htmlspecialchars($report['content'])); ?>
+                        <?php echo nl2br(htmlspecialchars($report['content'] ?? 'No content available')); ?>
                     </div>
+                    
                     <div class="report-meta">
                         <div class="meta-item">
                             <span class="meta-label">Classification</span>
-                            <span class="classification <?php echo strtolower(str_replace(' ', '-', $report['classification_level'])); ?>">
-                                <?php echo htmlspecialchars($report['classification_level']); ?>
+                            <span class="classification <?php echo strtolower(str_replace(' ', '-', $report['classification_level'] ?? 'unclassified')); ?>">
+                                <?php echo htmlspecialchars($report['classification_level'] ?? 'Unclassified'); ?>
                             </span>
                         </div>
                         <div class="meta-item">
                             <span class="meta-label">Agent</span>
-                            <span class="meta-value"><?php echo htmlspecialchars($report['agent_name']); ?></span>
+                            <span class="meta-value"><?php echo htmlspecialchars($report['agent_name'] ?? 'Unknown Agent'); ?></span>
                         </div>
                         <div class="meta-item">
                             <span class="meta-label">Target</span>
-                            <span class="meta-value"><?php echo htmlspecialchars($report['target_name']); ?></span>
+                            <span class="meta-value"><?php echo htmlspecialchars($report['target_name'] ?? 'No Target Specified'); ?></span>
                         </div>
                         <div class="meta-item">
-                            <span class="meta-label">Type</span>
-                            <span class="meta-value"><?php echo htmlspecialchars($report['target_type']); ?></span>
+                            <span class="meta-label">Report ID</span>
+                            <span class="meta-value"><?php echo htmlspecialchars($report['report_id'] ?? 'N/A'); ?></span>
                         </div>
                     </div>
                 </div>

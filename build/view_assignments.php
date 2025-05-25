@@ -37,7 +37,7 @@ try {
     echo "<h1>Drone Assignment System Status</h1>";
     echo "<div class='timestamp'>Timestamp: " . date('Y-m-d H:i:s', strtotime('+3 hours')) . "</div>";
 
-    // Display operators table
+    // Display operators table (using correct column names)
     echo "<h2>Operators</h2>";
     $result = $conn->query("SELECT * FROM Operator");
     
@@ -45,69 +45,56 @@ try {
         echo "Error fetching operators: " . $conn->error;
     } else {
         echo "<table>";
-        echo "<tr><th>ID</th><th>Name</th><th>Rank</th></tr>";
+        echo "<tr><th>ID</th><th>Rank</th></tr>";
         
         while ($row = $result->fetch_assoc()) {
             $rowClass = '';
-            if (isset($_GET['operator_id']) && $row['operator_id'] == $_GET['operator_id']) {
+            if (isset($_GET['op_id']) && $row['op_id'] == $_GET['op_id']) {
                 $rowClass = ' class="highlight"';
             }
             echo "<tr$rowClass>";
-            echo "<td>" . htmlspecialchars($row['operator_id']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['name']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['rank']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['op_id'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['rank'] ?? 'N/A') . "</td>";
             echo "</tr>";
         }
         echo "</table>";
     }
 
-    // Display drones table
+    // Display drones table (using correct structure)
     echo "<h2>Drones</h2>";
-    $result = $conn->query("SELECT d.*, 
-                           CASE WHEN a.drone_id IS NOT NULL THEN 'Assigned' ELSE 'Available' END AS status 
-                           FROM Drones d
-                           LEFT JOIN Assignments a ON d.drone_id = a.drone_id");
+    $result = $conn->query("SELECT * FROM Drones");
     
     if (!$result) {
         echo "Error fetching drones: " . $conn->error;
     } else {
         echo "<table>";
-        echo "<tr><th>ID</th><th>Model</th><th>Range</th><th>Max Altitude</th><th>Status</th></tr>";
+        echo "<tr><th>ID</th><th>Model</th><th>Range</th><th>Max Altitude</th><th>Assigned Operator</th></tr>";
         
         while ($row = $result->fetch_assoc()) {
             $rowClass = '';
-            $statusClass = '';
             
             if (isset($_GET['drone_id']) && $row['drone_id'] == $_GET['drone_id']) {
                 $rowClass = ' class="highlight"';
             }
             
-            if ($row['status'] === 'Available') {
-                $statusClass = ' class="status-available"';
-            } else {
-                $statusClass = ' class="status-assigned"';
-            }
-            
             echo "<tr$rowClass>";
-            echo "<td>" . htmlspecialchars($row['drone_id']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['model']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['range']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['max_altitude']) . "</td>";
-            echo "<td$statusClass>" . htmlspecialchars($row['status']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['drone_id'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['model'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['range'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['max_altitude'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['op_id'] ?? 'Unassigned') . "</td>";
             echo "</tr>";
         }
         echo "</table>";
     }
 
-    // Display assignments table
-    echo "<h2>Current Assignments</h2>";
-    $sql = "SELECT a.assignment_id, a.assignment_date, a.status,
-                  o.operator_id, o.name as operator_name, o.rank as operator_rank,
-                  d.drone_id, d.model as drone_model
-           FROM Assignments a
-           JOIN Operator o ON a.operator_id = o.operator_id
-           JOIN Drones d ON a.drone_id = d.drone_id
-           ORDER BY a.assignment_date DESC";
+    // Display drone-operator relationships
+    echo "<h2>Current Drone-Operator Assignments</h2>";
+    $sql = "SELECT d.drone_id, d.model, d.range, d.max_altitude, 
+                   o.op_id, o.rank
+            FROM Drones d
+            JOIN Operator o ON d.op_id = o.op_id
+            ORDER BY d.drone_id";
     
     $result = $conn->query($sql);
     
@@ -115,30 +102,22 @@ try {
         echo "Error fetching assignments: " . $conn->error;
     } else {
         if ($result->num_rows === 0) {
-            echo "<p>No assignments found. Use the assignment form to create one.</p>";
+            echo "<p>No drone-operator assignments found.</p>";
         } else {
             echo "<table>";
             echo "<tr>
-                  <th>Assignment ID</th>
-                  <th>Operator</th>
-                  <th>Drone</th>
-                  <th>Assignment Date</th>
-                  <th>Status</th>
+                  <th>Drone ID</th>
+                  <th>Drone Model</th>
+                  <th>Operator ID</th>
+                  <th>Operator Rank</th>
                   </tr>";
             
             while ($row = $result->fetch_assoc()) {
-                $rowClass = '';
-                if ((isset($_GET['operator_id']) && $row['operator_id'] == $_GET['operator_id']) || 
-                    (isset($_GET['drone_id']) && $row['drone_id'] == $_GET['drone_id'])) {
-                    $rowClass = ' class="highlight"';
-                }
-                
-                echo "<tr$rowClass>";
-                echo "<td>" . htmlspecialchars($row['assignment_id']) . "</td>";
-                echo "<td>" . htmlspecialchars($row['operator_id'] . ' - ' . $row['operator_name'] . ' (' . $row['operator_rank'] . ')') . "</td>";
-                echo "<td>" . htmlspecialchars($row['drone_id'] . ' - ' . $row['drone_model']) . "</td>";
-                echo "<td>" . htmlspecialchars($row['assignment_date']) . "</td>";
-                echo "<td>" . htmlspecialchars($row['status']) . "</td>";
+                echo "<tr>";
+                echo "<td>" . htmlspecialchars($row['drone_id'] ?? 'N/A') . "</td>";
+                echo "<td>" . htmlspecialchars($row['model'] ?? 'N/A') . "</td>";
+                echo "<td>" . htmlspecialchars($row['op_id'] ?? 'N/A') . "</td>";
+                echo "<td>" . htmlspecialchars($row['rank'] ?? 'N/A') . "</td>";
                 echo "</tr>";
             }
             echo "</table>";

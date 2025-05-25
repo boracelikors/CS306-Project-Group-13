@@ -17,7 +17,7 @@ try {
     
     // Get table counts for dashboard
     $tableNames = ['Countries', 'Base', 'Person', 'Soldier', 'Civil', 'Agents', 
-                   'Satellites', 'IntelligenceReports', 'Drones', 'Missiles', 
+                   'Satellites', 'Intelligence_Reports', 'Drones', 'Missiles', 
                    'Operator', 'Targets', 'Vehicles', 'Supply'];
     
     $counts = [];
@@ -33,7 +33,7 @@ try {
     
     // Count current assignments
     $assignmentCount = 0;
-    $result = $conn->query("SELECT COUNT(*) as count FROM Assignments WHERE status = 'ACTIVE'");
+    $result = $conn->query("SELECT COUNT(*) as count FROM Drones");
     if ($result) {
         $row = $result->fetch_assoc();
         $assignmentCount = $row['count'];
@@ -96,17 +96,6 @@ try {
             justify-content: center;
             gap: 2rem;
             padding: 1rem;
-        }
-
-        .military-logo {
-            width: 100px;
-            height: 100px;
-            object-fit: contain;
-            margin-right: 20px;
-        }
-
-        .header-text {
-            text-align: left;
         }
 
         .header h1 {
@@ -199,6 +188,7 @@ try {
             text-decoration: none;
             transition: background-color 0.2s;
             display: inline-block;
+            text-align: center;
         }
 
         .btn-primary {
@@ -217,6 +207,15 @@ try {
 
         .btn-secondary:hover {
             background-color: #7f8c8d;
+        }
+
+        .btn-admin {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-admin:hover {
+            background-color: #c0392b;
         }
 
         .status-bar {
@@ -340,8 +339,7 @@ try {
 
     <div class="header">
         <div class="header-content">
-            <img src="assets/military-logo.png" alt="Military Intelligence Logo" class="military-logo">
-            <div class="header-text">
+            <div>
                 <h1>Military Intelligence System</h1>
                 <p>Command and Control Dashboard</p>
             </div>
@@ -350,8 +348,11 @@ try {
 
     <div class="container">
         <div class="status-bar">
-            <p><strong>System Status:</strong> Online | <strong>Last Update:</strong> <?php echo date('Y-m-d H:i:s', strtotime('+3 hours')); ?></p>
-            <a href="view_database.php" class="btn btn-primary">View Current Data</a>
+            <p><strong>System Status:</strong> Online | <strong>Last Update:</strong> <?php echo date('Y-m-d H:i:s'); ?></p>
+            <div>
+                <a href="view_database.php" class="btn btn-primary">View Database</a>
+                <a href="admin_panel.php" class="btn btn-admin">Admin Panel</a>
+            </div>
         </div>
 
         <!-- Database Statistics -->
@@ -369,27 +370,80 @@ try {
                 <div class="stat-label">Targets</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number"><?php echo $counts['IntelligenceReports'] ?? 0; ?></div>
+                <div class="stat-number"><?php echo $counts['Intelligence_Reports'] ?? 0; ?></div>
                 <div class="stat-label">Reports</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?php echo $counts['Vehicles'] ?? 0; ?></div>
+                <div class="stat-label">Vehicles</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?php echo $counts['Supply'] ?? 0; ?></div>
+                <div class="stat-label">Supplies</div>
             </div>
         </div>
 
         <div class="dashboard">
+            <!-- Drone Operations -->
             <div class="module-card">
-                <h2>Drone Assignment Operations</h2>
+                <h2>Drone Operations</h2>
                 <p>Manage drone and operator assignments for military operations.</p>
                 <div class="button-group">
-                    <a href="assignment.php" class="btn btn-primary">Assign Operator to Drone</a>
-                    <a href="view_assignments.php" class="btn btn-secondary">View Current Assignments</a>
+                    <a href="assignment.php" class="btn btn-primary">Assign Operators</a>
+                    <a href="view_assignments.php" class="btn btn-secondary">View Assignments</a>
+                    <a href="stored_procedures.php?proc=assign_operator" class="btn btn-secondary">Use Procedure</a>
                 </div>
             </div>
 
+            <!-- Intelligence Operations -->
             <div class="module-card">
                 <h2>Intelligence Operations</h2>
                 <p>Access and manage intelligence reports from field operations.</p>
                 <div class="button-group">
-                    <a href="intelligence_reports.php" class="btn btn-primary">View Intelligence Reports</a>
-                    <a href="generate_report.php" class="btn btn-secondary">Generate New Report</a>
+                    <a href="intelligence_reports.php" class="btn btn-primary">View Reports</a>
+                    <a href="generate_report.php" class="btn btn-secondary">Generate Report</a>
+                    <a href="stored_procedures.php?proc=agent_reports" class="btn btn-secondary">Agent Reports</a>
+                </div>
+            </div>
+
+            <!-- Vehicle Management -->
+            <div class="module-card">
+                <h2>Vehicle Management</h2>
+                <p>Reserve and manage military vehicles across bases.</p>
+                <div class="button-group">
+                    <a href="vehicle_management.php" class="btn btn-primary">Manage Vehicles</a>
+                    <a href="stored_procedures.php?proc=reserve_vehicle" class="btn btn-secondary">Reserve Vehicle</a>
+                </div>
+            </div>
+
+            <!-- Supply Chain -->
+            <div class="module-card">
+                <h2>Supply Chain</h2>
+                <p>Order and manage military supplies and inventory.</p>
+                <div class="button-group">
+                    <a href="supply_management.php" class="btn btn-primary">Manage Supplies</a>
+                    <a href="stored_procedures.php?proc=order_supply" class="btn btn-secondary">Order Supplies</a>
+                </div>
+            </div>
+
+            <!-- Admin Functions -->
+            <div class="module-card">
+                <h2>Administration</h2>
+                <p>Administrative functions and system management.</p>
+                <div class="button-group">
+                    <a href="admin_panel.php" class="btn btn-admin">Admin Dashboard</a>
+                    <a href="admin/index.php" class="btn btn-admin">Ticket System</a>
+                    <a href="stored_procedures.php" class="btn btn-secondary">All Procedures</a>
+                </div>
+            </div>
+
+            <!-- Database Tools -->
+            <div class="module-card">
+                <h2>Database Tools</h2>
+                <p>Database management and monitoring tools.</p>
+                <div class="button-group">
+                    <a href="view_database.php" class="btn btn-primary">View All Data</a>
+                    <a href="trigger_monitor.php" class="btn btn-secondary">Trigger Monitor</a>
                 </div>
             </div>
         </div>

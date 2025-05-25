@@ -15,20 +15,14 @@ try {
         throw new Exception("Connection failed: " . $conn->connect_error);
     }
 
-    // Get available operators
-    $operators = $conn->query("SELECT operator_id, name, `rank` FROM Operator ORDER BY operator_id");
+    // Get available operators (using correct column names: op_id, rank)
+    $operators = $conn->query("SELECT op_id, `rank` FROM Operator ORDER BY op_id");
     if (!$operators) {
         throw new Exception("Error fetching operators: " . $conn->error);
     }
 
-    // Get available drones (not already assigned)
-    $drones = $conn->query("
-        SELECT d.drone_id, d.model 
-        FROM Drones d
-        LEFT JOIN Assignments a ON d.drone_id = a.drone_id
-        WHERE a.drone_id IS NULL
-        ORDER BY d.drone_id
-    ");
+    // Get available drones (escape 'range' keyword with backticks)
+    $drones = $conn->query("SELECT drone_id, model, `range`, max_altitude, op_id FROM Drones ORDER BY drone_id");
     if (!$drones) {
         throw new Exception("Error fetching drones: " . $conn->error);
     }
@@ -143,6 +137,22 @@ try {
             border-radius: 4px;
             margin-bottom: 1rem;
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
     </style>
 </head>
 <body>
@@ -159,17 +169,17 @@ try {
         <?php endif; ?>
         
         <?php if (isset($_GET['success'])): ?>
-            <div class="success-message">Assignment was successfully created!</div>
+            <div class="success-message">Assignment was successfully updated!</div>
         <?php endif; ?>
 
         <form action="process_assignment.php" method="POST">
             <div class="form-group">
-                <label for="operator_id">Operator</label>
-                <select name="operator_id" id="operator_id" required>
+                <label for="op_id">Operator</label>
+                <select name="op_id" id="op_id" required>
                     <option value="">Select an operator</option>
                     <?php while ($operator = $operators->fetch_assoc()): ?>
-                        <option value="<?php echo htmlspecialchars($operator['operator_id']); ?>">
-                            <?php echo htmlspecialchars($operator['operator_id'] . ' - ' . $operator['name'] . ' (' . $operator['rank'] . ')'); ?>
+                        <option value="<?php echo htmlspecialchars($operator['op_id']); ?>">
+                            <?php echo htmlspecialchars('ID: ' . $operator['op_id'] . ' - Rank: ' . $operator['rank']); ?>
                         </option>
                     <?php endwhile; ?>
                 </select>
@@ -180,20 +190,56 @@ try {
                 <label for="drone_id">Drone</label>
                 <select name="drone_id" id="drone_id" required>
                     <option value="">Select a drone</option>
-                    <?php while ($drone = $drones->fetch_assoc()): ?>
+                    <?php 
+                    // Reset the result pointer and escape 'range' keyword
+                    $drones = $conn->query("SELECT drone_id, model, `range`, max_altitude, op_id FROM Drones ORDER BY drone_id");
+                    while ($drone = $drones->fetch_assoc()): ?>
                         <option value="<?php echo htmlspecialchars($drone['drone_id']); ?>">
-                            <?php echo htmlspecialchars($drone['drone_id'] . ' - ' . $drone['model']); ?>
+                            <?php echo htmlspecialchars('ID: ' . $drone['drone_id'] . ' - ' . $drone['model'] . ' (Currently assigned to Operator ' . $drone['op_id'] . ')'); ?>
                         </option>
                     <?php endwhile; ?>
                 </select>
-                <div class="help-text">Select the drone to be assigned (only available drones are shown).</div>
+                <div class="help-text">Select the drone to reassign to the selected operator.</div>
             </div>
 
             <div class="button-group">
                 <a href="index.php" class="btn btn-secondary">Back to Home</a>
-                <button type="submit" class="btn btn-primary">Create Assignment</button>
+                <button type="submit" class="btn btn-primary">Update Assignment</button>
             </div>
         </form>
+
+        <h2>Current Assignments</h2>
+        <table>
+            <tr>
+                <th>Drone ID</th>
+                <th>Model</th>
+                <th>Range</th>
+                <th>Max Altitude</th>
+                <th>Assigned Operator</th>
+                <th>Operator Rank</th>
+            </tr>
+            <?php 
+            // Escape 'range' keyword in the assignments query too
+            $assignments = $conn->query("
+                SELECT d.drone_id, d.model, d.`range`, d.max_altitude, d.op_id, o.`rank`
+                FROM Drones d
+                JOIN Operator o ON d.op_id = o.op_id
+                ORDER BY d.drone_id
+            ");
+            
+            if ($assignments && $assignments->num_rows > 0):
+                while ($assignment = $assignments->fetch_assoc()): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($assignment['drone_id']); ?></td>
+                        <td><?php echo htmlspecialchars($assignment['model']); ?></td>
+                        <td><?php echo htmlspecialchars($assignment['range']); ?></td>
+                        <td><?php echo htmlspecialchars($assignment['max_altitude']); ?></td>
+                        <td><?php echo htmlspecialchars($assignment['op_id']); ?></td>
+                        <td><?php echo htmlspecialchars($assignment['rank']); ?></td>
+                    </tr>
+                <?php endwhile;
+            endif; ?>
+        </table>
     </div>
 </body>
 </html> 

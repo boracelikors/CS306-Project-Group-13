@@ -19,7 +19,7 @@ try {
     $agents = $conn->query("SELECT agent_id, name FROM Agents ORDER BY name");
     
     // Get targets for dropdown
-    $targets = $conn->query("SELECT target_id, name, type FROM Targets ORDER BY name");
+    $targets = $conn->query("SELECT target_id, name, `type` FROM Targets ORDER BY name");
     
     // Handle form submission
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -27,29 +27,30 @@ try {
         $target_id = $_POST['target_id'];
         $content = $_POST['content'];
         $classification = $_POST['classification'];
+        $title = $_POST['title'] ?? 'New Intelligence Report';
         
         // Start transaction
         $conn->begin_transaction();
         
         try {
             // Get the next report_id
-            $result = $conn->query("SELECT MAX(report_id) as max_id FROM IntelligenceReports");
+            $result = $conn->query("SELECT MAX(report_id) as max_id FROM Intelligence_Reports");
             $row = $result->fetch_assoc();
             $report_id = ($row['max_id'] ?? 0) + 1;
             
-            // Insert new report
-            $stmt = $conn->prepare("INSERT INTO IntelligenceReports (report_id, date_created, title, content, classification_level, operational_status, agent_id) VALUES (?, DATE_SUB(NOW(), INTERVAL 3 HOUR), 'New Intelligence Report', ?, ?, 'Active', ?)");
-            $stmt->bind_param("issi", $report_id, $content, $classification, $agent_id);
+            // Insert new report (using correct table name and column structure)
+            $stmt = $conn->prepare("INSERT INTO Intelligence_Reports (report_id, title, content, date_created, classification_level, agent_id) VALUES (?, ?, ?, NOW(), ?, ?)");
+            $stmt->bind_param("isssi", $report_id, $title, $content, $classification, $agent_id);
             $stmt->execute();
             
-            // Insert into Decides table to link report with target
-            $stmt = $conn->prepare("INSERT INTO Decides (report_id, target_id) VALUES (?, ?)");
+            // Insert into Intelligence_Report_Decides_Target table to link report with target
+            $stmt = $conn->prepare("INSERT INTO Intelligence_Report_Decides_Target (report_id, target_id) VALUES (?, ?)");
             $stmt->bind_param("ii", $report_id, $target_id);
             $stmt->execute();
             
             // Commit transaction
             $conn->commit();
-            $success = "Intelligence report successfully generated!";
+            $success = "Intelligence report successfully generated with ID: " . $report_id;
             
         } catch (Exception $e) {
             // Rollback transaction on error
@@ -118,13 +119,14 @@ try {
             font-weight: 500;
         }
 
-        select, textarea {
+        input, select, textarea {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 1rem;
             font-family: inherit;
+            box-sizing: border-box;
         }
 
         textarea {
@@ -184,6 +186,13 @@ try {
             border-radius: 5px;
             margin-bottom: 1rem;
         }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
@@ -204,47 +213,62 @@ try {
         <?php endif; ?>
 
         <div class="form-card">
+            <h2>Create New Intelligence Report</h2>
+            
             <form method="POST" action="">
                 <div class="form-group">
+                    <label for="title">Report Title</label>
+                    <input type="text" id="title" name="title" required placeholder="Enter report title">
+                </div>
+
+                <div class="form-group">
                     <label for="agent_id">Reporting Agent</label>
-                    <select name="agent_id" id="agent_id" required>
-                        <option value="">Select Agent</option>
-                        <?php while ($agent = $agents->fetch_assoc()): ?>
-                            <option value="<?php echo $agent['agent_id']; ?>">
-                                <?php echo htmlspecialchars($agent['name']); ?>
-                            </option>
-                        <?php endwhile; ?>
+                    <select id="agent_id" name="agent_id" required>
+                        <option value="">Select an agent</option>
+                        <?php if (isset($agents) && $agents->num_rows > 0): ?>
+                            <?php while ($agent = $agents->fetch_assoc()): ?>
+                                <option value="<?php echo htmlspecialchars($agent['agent_id']); ?>">
+                                    <?php echo htmlspecialchars($agent['agent_id'] . ' - ' . $agent['name']); ?>
+                                </option>
+                            <?php endwhile; ?>
+                        <?php endif; ?>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="target_id">Target</label>
-                    <select name="target_id" id="target_id" required>
-                        <option value="">Select Target</option>
-                        <?php while ($target = $targets->fetch_assoc()): ?>
-                            <option value="<?php echo $target['target_id']; ?>">
-                                <?php echo htmlspecialchars($target['name'] . ' (' . $target['type'] . ')'); ?>
-                            </option>
-                        <?php endwhile; ?>
+                    <select id="target_id" name="target_id" required>
+                        <option value="">Select a target</option>
+                        <?php if (isset($targets) && $targets->num_rows > 0): ?>
+                            <?php while ($target = $targets->fetch_assoc()): ?>
+                                <option value="<?php echo htmlspecialchars($target['target_id']); ?>">
+                                    <?php echo htmlspecialchars($target['target_id'] . ' - ' . $target['name'] . ' (' . ($target['type'] ?? 'Unknown') . ')'); ?>
+                                </option>
+                            <?php endwhile; ?>
+                        <?php endif; ?>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="classification">Classification Level</label>
-                    <select name="classification" id="classification" required>
-                        <option value="">Select Classification</option>
-                        <option value="TOP SECRET">Top Secret</option>
-                        <option value="SECRET">Secret</option>
-                        <option value="CONFIDENTIAL">Confidential</option>
+                    <select id="classification" name="classification" required>
+                        <option value="">Select classification</option>
+                        <option value="Unclassified">Unclassified</option>
+                        <option value="Confidential">Confidential</option>
+                        <option value="Secret">Secret</option>
+                        <option value="Top Secret">Top Secret</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="content">Report Content</label>
-                    <textarea name="content" id="content" required placeholder="Enter detailed intelligence report..."></textarea>
+                    <textarea id="content" name="content" required placeholder="Enter detailed intelligence report content..."></textarea>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Generate Report</button>
+                <div class="button-group">
+                    <a href="intelligence_reports.php" class="btn btn-secondary">View Reports</a>
+                    <button type="submit" class="btn btn-primary">Generate Report</button>
+                </div>
             </form>
         </div>
     </div>
