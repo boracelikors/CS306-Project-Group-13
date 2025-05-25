@@ -26,6 +26,8 @@ try {
         th { background-color: #f5f5f5; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .timestamp { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+        .back-link { display: inline-block; margin-top: 20px; padding: 10px 15px; background-color: #2c3e50; color: white; text-decoration: none; border-radius: 4px; }
+        .back-link:hover { background-color: #34495e; }
     </style>
     ";
 
@@ -37,7 +39,8 @@ try {
         $result = $conn->query("SELECT * FROM `$tableName`");
         
         if (!$result) {
-            echo "Error fetching data from $tableName: " . $conn->error;
+            echo "<h2>Table: $tableName</h2>";
+            echo "<p>Error fetching data from $tableName: " . $conn->error . "</p>";
             return;
         }
 
@@ -64,7 +67,7 @@ try {
         echo "</table>";
     }
 
-    // List of all tables to display
+    // List of actual tables that exist in the database
     $tables = [
         'Countries',
         'Base',
@@ -73,24 +76,25 @@ try {
         'Civil',
         'Agents',
         'Satellites',
-        'IntelligenceReports',
+        'Intelligence_Reports',
         'Drones',
         'Missiles',
         'Operator',
         'Targets',
         'Vehicles',
         'Supply',
-        'Decides',
-        'Watches',
-        'Attacks',
-        'In_Radar',
-        'Stores'
+        'Intelligence_Report_Decides_Target',
+        'Agent_Wrote_Report',
+        'Target_Base_Radar',
+        'Base_Stores_Supply'
     ];
 
     // Display each table
     foreach ($tables as $table) {
         printTable($conn, $table);
     }
+
+    echo "<a href='index.php' class='back-link'>Back to Home</a>";
 
 } catch (Exception $e) {
     echo "Fatal error: " . $e->getMessage();
