@@ -4,36 +4,72 @@ require_once '../../config/mysql.php';
 $message = '';
 $success = false;
 
+// Get list of drones
+$drones = [];
+$conn = getMySQLConnection();
+$result = $conn->query("SELECT drone_id, model, status FROM Drones ORDER BY drone_id");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $drones[] = $row;
+    }
+}
+
+// Get list of missiles
+$missiles = [];
+$result = $conn->query("SELECT missile_id, type, status FROM Missiles ORDER BY missile_id");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $missiles[] = $row;
+    }
+}
+
+// Get current assignments
+$assignments = [];
+$result = $conn->query("
+    SELECT ds.*, d.model as drone_model, m.type as missile_type 
+    FROM DroneStatus ds
+    JOIN Drones d ON ds.drone_id = d.drone_id
+    JOIN Missiles m ON ds.missile_id = m.missile_id
+    ORDER BY ds.assignment_date DESC
+    LIMIT 10
+");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $assignments[] = $row;
+    }
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $conn = getMySQLConnection();
-    $action = $_POST['action'];
+    
+    $drone_id = $_POST['drone_id'];
+    $missile_id = $_POST['missile_id'];
     
     try {
-        if ($action == 'valid_assignment') {
-            // Test Case 1: Valid assignment (trigger should succeed)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (1, 1)");
-            $stmt->execute();
-            $message = "✅ Valid assignment completed! Trigger fired successfully and logged the assignment.";
-            $success = true;
-            
-        } elseif ($action == 'invalid_drone') {
-            // Test Case 2: Invalid drone ID (trigger should fail)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (999, 1)");
-            $stmt->execute();
-            $message = "❌ This shouldn't happen - invalid drone should be rejected!";
-            $success = false;
-            
-        } elseif ($action == 'invalid_missile') {
-            // Test Case 3: Invalid missile ID (trigger should fail)
-            $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (1, 999)");
-            $stmt->execute();
-            $message = "❌ This shouldn't happen - invalid missile should be rejected!";
-            $success = false;
-        }
+        // Insert into Drone_Missile_Usage to trigger the LogMissileAssignment trigger
+        $stmt = $conn->prepare("INSERT INTO Drone_Missile_Usage (drone_id, missile_id) VALUES (?, ?)");
+        $stmt->bind_param("ii", $drone_id, $missile_id);
+        $stmt->execute();
         
+        $message = "Successfully assigned missile to drone. The trigger has logged this assignment.";
+        $success = true;
+        
+        // Refresh assignments list
+        $result = $conn->query("
+            SELECT ds.*, d.model as drone_model, m.type as missile_type 
+            FROM DroneStatus ds
+            JOIN Drones d ON ds.drone_id = d.drone_id
+            JOIN Missiles m ON ds.missile_id = m.missile_id
+            ORDER BY ds.assignment_date DESC
+            LIMIT 10
+        ");
+        $assignments = [];
+        while ($row = $result->fetch_assoc()) {
+            $assignments[] = $row;
+        }
     } catch (mysqli_sql_exception $e) {
-        $message = "🔥 Trigger validation worked! Error: " . $e->getMessage();
-        $success = true; // This is actually success for validation triggers
+        $message = $e->getMessage();
+        $success = false;
     }
     
     $stmt->close();
@@ -52,48 +88,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             font-family: Arial, sans-serif;
             margin: 20px;
             line-height: 1.6;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
         }
-        .trigger-info {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
             border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
         }
-        .test-buttons {
-            display: flex;
-            gap: 15px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-        .test-button {
+        button {
             background: #3498db;
             color: white;
-            padding: 15px 20px;
+            padding: 10px 20px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            flex: 1;
-            min-width: 200px;
         }
-        .test-button:hover {
+        button:hover {
             background: #2980b9;
-        }
-        .test-button.danger {
-            background: #e74c3c;
-        }
-        .test-button.danger:hover {
-            background: #c0392b;
         }
         .message {
             margin-top: 20px;
-            padding: 15px;
+            padding: 10px;
             border-radius: 4px;
-            font-weight: bold;
         }
         .success {
             background: #d4edda;
@@ -107,63 +137,122 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         .back-link {
             display: block;
-            margin-top: 30px;
+            margin-top: 20px;
             color: #3498db;
             text-decoration: none;
-            font-size: 16px;
         }
         .back-link:hover {
             text-decoration: underline;
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 500;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .trigger-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
     </style>
 </head>
 <body>
-    <h1>🚀 Log Missile Assignment Trigger</h1>
+    <h1>Log Missile Assignment Trigger</h1>
     
     <div class="trigger-info">
         <h3>About this Trigger</h3>
-        <p><strong>LogMissileAssignment</strong> automatically fires when someone inserts into the Drone_Missile_Usage table. It:</p>
+        <p>This trigger automatically logs missile assignments to drones in the DroneStatus table. It performs the following actions:</p>
         <ul>
-            <li>✅ Validates that the drone exists in the Drones table</li>
-            <li>✅ Validates that the missile exists in the Missiles table</li>
-            <li>✅ Logs the assignment in the DroneStatus table</li>
-            <li>❌ Prevents invalid assignments with error messages</li>
+            <li>Validates that both the drone and missile exist in their respective tables</li>
+            <li>Creates a new status record with the assignment details</li>
+            <li>Automatically timestamps the assignment</li>
         </ul>
-        <p><strong>Test the trigger by clicking the buttons below:</strong></p>
     </div>
 
-    <div class="test-buttons">
-        <form method="POST" style="flex: 1;">
-            <input type="hidden" name="action" value="valid_assignment">
-            <button type="submit" class="test-button">
-                ✅ Test Valid Assignment<br>
-                <small>(Drone 1 + Missile 1)</small>
-            </button>
-        </form>
-        
-        <form method="POST" style="flex: 1;">
-            <input type="hidden" name="action" value="invalid_drone">
-            <button type="submit" class="test-button danger">
-                ❌ Test Invalid Drone<br>
-                <small>(Drone 999 - should fail)</small>
-            </button>
-        </form>
-        
-        <form method="POST" style="flex: 1;">
-            <input type="hidden" name="action" value="invalid_missile">
-            <button type="submit" class="test-button danger">
-                ❌ Test Invalid Missile<br>
-                <small>(Missile 999 - should fail)</small>
-            </button>
-        </form>
-    </div>
+    <form method="POST">
+        <div class="form-group">
+            <label for="drone_id">Select Drone:</label>
+            <select id="drone_id" name="drone_id" required>
+                <option value="">Choose a drone</option>
+                <?php foreach ($drones as $drone): ?>
+                    <option value="<?php echo htmlspecialchars($drone['drone_id']); ?>">
+                        Drone <?php echo htmlspecialchars($drone['drone_id']); ?> - 
+                        <?php echo htmlspecialchars($drone['model']); ?>
+                        (<?php echo htmlspecialchars($drone['status']); ?>)
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="missile_id">Select Missile:</label>
+            <select id="missile_id" name="missile_id" required>
+                <option value="">Choose a missile</option>
+                <?php foreach ($missiles as $missile): ?>
+                    <option value="<?php echo htmlspecialchars($missile['missile_id']); ?>">
+                        Missile <?php echo htmlspecialchars($missile['missile_id']); ?> - 
+                        <?php echo htmlspecialchars($missile['type']); ?>
+                        (<?php echo htmlspecialchars($missile['status']); ?>)
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <button type="submit">Assign Missile to Drone</button>
+    </form>
 
     <?php if ($message): ?>
         <div class="message <?php echo $success ? 'success' : 'error'; ?>">
-            <?php echo $message; ?>
+            <?php echo htmlspecialchars($message); ?>
         </div>
     <?php endif; ?>
 
-    <a href="../index.php" class="back-link">← Back to Home</a>
+    <?php if (!empty($assignments)): ?>
+        <h2>Recent Assignments</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Status ID</th>
+                    <th>Drone</th>
+                    <th>Missile</th>
+                    <th>Status</th>
+                    <th>Assignment Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($assignments as $assignment): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($assignment['status_id']); ?></td>
+                        <td>
+                            <?php echo htmlspecialchars($assignment['drone_id']); ?> - 
+                            <?php echo htmlspecialchars($assignment['drone_model']); ?>
+                        </td>
+                        <td>
+                            <?php echo htmlspecialchars($assignment['missile_id']); ?> - 
+                            <?php echo htmlspecialchars($assignment['missile_type']); ?>
+                        </td>
+                        <td><?php echo htmlspecialchars($assignment['status']); ?></td>
+                        <td><?php echo htmlspecialchars($assignment['assignment_date']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+
+    <a href="../index.php" class="back-link">Back to Home</a>
 </body>
 </html> 
