@@ -1,9 +1,9 @@
 <?php
 // MySQL connection settings
-define('MYSQL_HOST', 'localhost');
+define('MYSQL_HOST', 'localhost:3308');
 define('MYSQL_USER', 'root');
-define('MYSQL_PASSWORD', '2003');
-define('MYSQL_DATABASE', 'military_intelligence');
+define('MYSQL_PASSWORD', '2112');
+define('MYSQL_DATABASE', 'cs306');
 
 // Helper function to get MySQL connection
 function getMySQLConnection() {

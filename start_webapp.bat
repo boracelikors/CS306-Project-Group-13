@@ -21,12 +21,12 @@ if %errorLevel% neq 0 (
     echo Database not found. Creating new database...
     if exist "%PROJECT_DIR%build\setup_database.php" (
         cd /d "%PROJECT_DIR%build"
-    php setup_database.php
-    if %errorLevel% neq 0 (
-        echo Database setup failed!
-        pause
-        exit /b 1
-    )
+        php setup_database.php
+        if %errorLevel% neq 0 (
+            echo Database setup failed!
+            pause
+            exit /b 1
+        )
         cd /d "%PROJECT_DIR%"
     ) else (
         echo setup_database.php not found!
@@ -37,7 +37,7 @@ if %errorLevel% neq 0 (
     echo Database already exists. Skipping setup.
 )
 
-:: Import SQL procedures and triggers
+:: Import SQL procedures and triggers (with DROP IF EXISTS to avoid conflicts)
 echo Setting up database procedures and triggers...
 
 :: Import all stored procedures
@@ -110,18 +110,10 @@ if %errorLevel% neq 0 (
 echo Creating test file...
 echo ^<?php echo "PHP is working!"; ?^> > test.php
 
-:: Start PHP development server from the scripts directory (not build)
+:: Start PHP development server with error display
 echo Starting PHP development server...
-echo User interface will be available at http://localhost:8000/user/
-echo Admin interface will be available at http://localhost:8000/admin/
+echo The web application will be available at http://localhost:8000
+echo Test page available at http://localhost:8000/test.php
 echo Press Ctrl+C to stop the server when you're done.
 
-if exist "%PROJECT_DIR%scripts" (
-    cd /d "%PROJECT_DIR%scripts"
-php -S localhost:8000 
-) else (
-    echo Error: scripts directory not found!
-    echo Available directories:
-    dir "%PROJECT_DIR%" /b
-    pause
-) 
+php -d display_errors=1 -d error_reporting=E_ALL -S localhost:8000 
